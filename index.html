@@ -1018,7 +1018,8 @@
   async function loadPrompts() {
     try {
       // Simple query without orderBy to avoid index issues
-      const snap = await getDocs(collection(db, 'prompts'));
+      console.log('Fetching from Firestore...');
+     const snap = await getDocs(collection(db, 'prompts'));
       allPrompts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
       // Sort by copyCount client-side
@@ -1038,22 +1039,13 @@
       }
 
       renderPrompts(allPrompts);
-    } catch (e) {
-      console.error('Firestore load error:', e.code, e.message);
-      if (e.code === 'permission-denied') {
-        // Firestore rules blocking read
-        document.getElementById('promptGrid').innerHTML = '';
-        document.getElementById('emptyState').style.display = 'block';
-        document.getElementById('emptyState').innerHTML = `
-          <div class="icon">🔒</div>
-          <h3>Permission Error</h3>
-          <p style="color:#ff8888;font-size:12px;">Firebase rules are blocking reads.<br>Fix: Go to Firebase Console → Firestore → Rules and set read to <b>true</b></p>
-        `;
-        document.getElementById('countBadge').textContent = 'Error';
-      } else {
-        // Other errors - show demo
-        allPrompts = getDemoPrompts();
-        renderPrompts(allPrompts);
+      } catch (e) {
+      console.error('FIRESTORE ERROR:', e.code, e.message);
+      document.getElementById('countBadge').textContent = e.code || 'Error';
+      document.getElementById('promptGrid').innerHTML = 
+        `<div style="color:orange;padding:20px;grid-column:1/-1">Error: ${e.code} — ${e.message}</div>`;
+    }
+  
       }
     }
   }
