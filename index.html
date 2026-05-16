@@ -4,17 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Prompt Gallery — AI Image Prompts</title>
-<meta name="description" content="Discover and share AI image prompts for Cinematic, 4K, Anime styles.">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Prompt Gallery">
-<meta property="og:title" id="ogTitle" content="Prompt Gallery — AI Image Prompts">
-<meta property="og:description" id="ogDesc" content="Discover and share AI image prompts.">
-<meta property="og:image" id="ogImage" content="https://promptgallery.surajfx.in/og-default.jpg">
-<meta property="og:url" id="ogUrl" content="https://promptgallery.surajfx.in/">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" id="twTitle" content="Prompt Gallery">
-<meta name="twitter:description" id="twDesc" content="Discover AI image prompts">
-<meta name="twitter:image" id="twImage" content="https://promptgallery.surajfx.in/og-default.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -436,99 +425,7 @@
 
   function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 
-
-  // ===== HASH URL — Dynamic card links =====
-  function slugify(text) {
-    return (text || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 60);
-  }
-
-  function updateOGTags(prompt) {
-    const url = 'https://promptgallery.surajfx.in/#' + slugify(prompt.title) + '-' + prompt.id.substring(0, 6);
-    const img = prompt.imageUrl || 'https://promptgallery.surajfx.in/og-default.jpg';
-    const desc = (prompt.girlPrompt || prompt.boyPrompt || '').substring(0, 120) + '...';
-    document.title = prompt.title + ' — Prompt Gallery';
-    const setMeta = (id, val) => { const el = document.getElementById(id); if(el) el.setAttribute('content', val); };
-    setMeta('ogTitle', prompt.title + ' — Prompt Gallery');
-    setMeta('ogDesc', desc);
-    setMeta('ogImage', img);
-    setMeta('ogUrl', url);
-    setMeta('twTitle', prompt.title);
-    setMeta('twDesc', desc);
-    setMeta('twImage', img);
-  }
-
-  function resetOGTags() {
-    document.title = 'Prompt Gallery — AI Image Prompts';
-    const setMeta = (id, val) => { const el = document.getElementById(id); if(el) el.setAttribute('content', val); };
-    setMeta('ogTitle', 'Prompt Gallery — AI Image Prompts');
-    setMeta('ogDesc', 'Discover and share AI image prompts.');
-    setMeta('ogImage', 'https://promptgallery.surajfx.in/og-default.jpg');
-    setMeta('ogUrl', 'https://promptgallery.surajfx.in/');
-  }
-
-  // Override openModal to also update hash
-  const _origOpen = window.openModal;
-  window.openModal = (id) => {
-    _origOpen(id);
-    const p = allPrompts.find(x => x.id === id);
-    if (p) {
-      const slug = slugify(p.title) + '-' + id.substring(0, 6);
-      history.replaceState({modal: true, id}, '', '#' + slug);
-      updateOGTags(p);
-    }
-  };
-
-  // Override closeModal to reset hash
-  const _origClose = window.closeModal;
-  window.closeModal = () => {
-    _origClose();
-    history.replaceState({}, '', '#');
-    resetOGTags();
-  };
-
-  // Override sharePrompt to use hash URL
-  window.sharePrompt = () => {
-    if (!currentPrompt) return;
-    const slug = slugify(currentPrompt.title) + '-' + currentPrompt.id.substring(0, 6);
-    const url = 'https://promptgallery.surajfx.in/#' + slug;
-    const text = currentPrompt.title + ' — Check out this AI prompt!';
-    if (navigator.share) {
-      navigator.share({ title: currentPrompt.title, text, url });
-    } else {
-      navigator.clipboard.writeText(url);
-      showToast('Link copied! 🔗');
-    }
-  };
-
-  // On page load — check if hash matches a card
-  async function checkHashOnLoad() {
-    const hash = window.location.hash.replace('#', '');
-    if (!hash || hash === '/') return;
-    // Wait for prompts to load then open matching card
-    const tryOpen = (attempts = 0) => {
-      if (allPrompts.length > 0) {
-        // Match by ID prefix (last 6 chars of hash after last -)
-        const parts = hash.split('-');
-        const idPrefix = parts[parts.length - 1];
-        const matched = allPrompts.find(p => p.id.startsWith(idPrefix) || slugify(p.title) === parts.slice(0, -1).join('-'));
-        if (matched) openModal(matched.id);
-      } else if (attempts < 20) {
-        setTimeout(() => tryOpen(attempts + 1), 300);
-      }
-    };
-    tryOpen();
-  }
-
-  window.addEventListener('hashchange', () => {
-    const hash = window.location.hash.replace('#', '');
-    if (!hash || hash === '/') {
-      const overlay = document.getElementById('modalOverlay');
-      if (overlay.classList.contains('open')) { overlay.classList.remove('open'); document.body.style.overflow = ''; resetOGTags(); }
-    }
-  });
-
-  loadPrompts().then(() => checkHashOnLoad());
-
+  loadPrompts();
 </script>
 
 <footer style="text-align:center;padding:30px 20px 80px;border-top:1px solid rgba(255,255,255,0.06);margin-top:20px;">
@@ -541,57 +438,5 @@
   </div>
   <div style="color:#3a3f52;font-size:11px;margin-top:16px;">© 2026 Prompt Gallery · All rights reserved</div>
 </footer>
-
-<!-- Instagram/Facebook In-App Browser Banner -->
-<div id="inAppBanner" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);z-index:99999;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#12131a;border:1px solid rgba(255,193,7,0.3);border-radius:24px;padding:28px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.8);">
-    <div style="font-size:48px;margin-bottom:16px;">🌐</div>
-    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:#fff;margin-bottom:10px;">Open in Chrome</div>
-    <div style="font-size:13px;color:#8a92a6;line-height:1.6;margin-bottom:24px;">Some features don't work in Instagram's browser.<br>For the best experience, open in Chrome.</div>
-    <button onclick="openInChrome()" style="width:100%;background:linear-gradient(135deg,#ffc107,#ff9800);color:#000;border:none;padding:14px 20px;border-radius:12px;font-family:'Syne',sans-serif;font-weight:800;font-size:15px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
-      <span>🚀</span> Open in Chrome
-    </button>
-    <button onclick="document.getElementById('inAppBanner').style.display='none'" style="width:100%;background:transparent;color:#5a5f72;border:1px solid rgba(255,255,255,0.1);padding:12px 20px;border-radius:12px;font-family:'Syne',sans-serif;font-weight:600;font-size:13px;cursor:pointer;">
-      Continue here
-    </button>
-  </div>
-</div>
-
-<script>
-  // Detect Instagram / Facebook in-app browser
-  (function() {
-    const ua = navigator.userAgent || '';
-    const isInApp = /Instagram|FBAN|FBAV|FB_IAB|FB4A|FBIOS|Twitter|Line\/|Musical/.test(ua);
-    
-    if (isInApp) {
-      document.getElementById('inAppBanner').style.display = 'flex';
-    }
-  })();
-
-  function openInChrome() {
-    const url = window.location.href;
-    // Android: intent scheme
-    const intentUrl = 'intent://' + url.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
-    // Try Android intent first
-    try {
-      window.location.href = intentUrl;
-    } catch(e) {}
-    // Fallback: copy link and show instruction
-    setTimeout(() => {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url).then(() => {
-          document.getElementById('inAppBanner').innerHTML = `
-            <div style="background:#12131a;border:1px solid rgba(255,193,7,0.3);border-radius:24px;padding:28px 24px;max-width:340px;width:100%;text-align:center;">
-              <div style="font-size:48px;margin-bottom:16px;">✅</div>
-              <div style="font-family:Syne,sans-serif;font-weight:800;font-size:18px;color:#fff;margin-bottom:10px;">Link Copy হয়েছে!</div>
-              <div style="font-size:13px;color:#8a92a6;line-height:1.6;margin-bottom:20px;">Chrome browser খোলো → address bar এ paste করো → Enter দাও</div>
-              <button onclick="document.getElementById('inAppBanner').style.display='none'" style="width:100%;background:rgba(255,193,7,0.15);color:#ffc107;border:1px solid rgba(255,193,7,0.3);padding:12px;border-radius:12px;font-family:Syne,sans-serif;font-weight:700;font-size:14px;cursor:pointer;">ঠিক আছে</button>
-            </div>`;
-        });
-      }
-    }, 1500);
-  }
-</script>
-
 </body>
 </html>
