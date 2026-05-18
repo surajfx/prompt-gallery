@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Prompt Gallery — AI Image Prompts</title>
+<meta name="description" content="Discover and share AI image prompts for Cinematic, 4K, Anime styles.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prompt Gallery">
+<meta property="og:title" id="ogTitle" content="Prompt Gallery — AI Image Prompts">
+<meta property="og:description" id="ogDesc" content="Discover and share AI image prompts.">
+<meta property="og:image" id="ogImage" content="https://promptgallery.surajfx.in/og-default.jpg">
+<meta property="og:url" id="ogUrl" content="https://promptgallery.surajfx.in/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" id="twTitle" content="Prompt Gallery">
+<meta name="twitter:description" id="twDesc" content="Discover AI image prompts">
+<meta name="twitter:image" id="twImage" content="https://promptgallery.surajfx.in/og-default.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -106,6 +117,55 @@
   .related-card-img-placeholder { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 24px; background: var(--card); }
   .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1a1a1a; border: 1px solid rgba(255,193,7,0.3); color: var(--gold); padding: 10px 20px; border-radius: 100px; font-size: 13px; font-weight: 600; font-family: 'Syne', sans-serif; z-index: 9999; opacity: 0; transition: all 0.3s ease; white-space: nowrap; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ===== SMOOTH IMPROVEMENTS ===== */
+  * { -webkit-tap-highlight-color: transparent; }
+  
+  html { scroll-behavior: smooth; }
+  
+  /* Smooth card hover */
+  .card { transition: all 0.3s cubic-bezier(0.34, 1.2, 0.64, 1); }
+  .card:active { transform: scale(0.97); }
+  
+  /* Smooth filter buttons */
+  .filter-btn { transition: all 0.25s cubic-bezier(0.34, 1.2, 0.64, 1); }
+  .filter-btn:active { transform: scale(0.95); }
+  
+  /* Smooth bottom nav */
+  .bottom-nav-item { transition: all 0.2s ease; }
+  .bottom-nav-item:active { transform: scale(0.9); }
+  
+  /* Smooth buttons */
+  button { transition: all 0.2s ease; }
+  button:active { transform: scale(0.96); opacity: 0.85; }
+  
+  /* Smooth modal */
+  .modal { transition: transform 0.35s cubic-bezier(0.34, 1.1, 0.64, 1); }
+  
+  /* Smooth image load */
+  .card-img { transition: transform 0.4s ease, opacity 0.3s ease; opacity: 0; }
+  .card-img.loaded { opacity: 1; }
+  
+  /* Smooth search */
+  .search-input { transition: all 0.25s ease; }
+  .search-input:focus { transform: scale(1.01); box-shadow: 0 0 0 3px rgba(255,193,7,0.15); }
+  
+  /* Smooth like button */
+  .card-like-btn { transition: all 0.2s cubic-bezier(0.34, 1.5, 0.64, 1); }
+  .card-like-btn:active { transform: scale(1.3); }
+  
+  /* Page load fade in */
+  body { animation: pageFadeIn 0.4s ease; }
+  @keyframes pageFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  
+  /* Smooth copy btn */
+  .copy-btn { transition: all 0.2s ease; }
+  .copy-btn:active { transform: scale(0.97); }
+  
+  /* Nav upload btn */
+  .nav-upload-btn:active { transform: scale(0.95); }
+  .nav-auth-btn:active { transform: scale(0.95); }
+
   @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
@@ -356,7 +416,9 @@
     if (!currentPrompt) return;
     const text = type==='girl' ? currentPrompt.girlPrompt : currentPrompt.boyPrompt;
     navigator.clipboard.writeText(text||'').catch(()=>{});
-    if (currentPrompt.id && !currentPrompt.id.startsWith('demo')) updateDoc(doc(db,'prompts',currentPrompt.id),{copyCount:increment(1)}).catch(()=>{});
+    if (currentPrompt.id && !currentPrompt.id.startsWith('demo')) {
+      updateDoc(doc(db,'prompts',currentPrompt.id),{copyCount:increment(1)}).catch(e => console.error('Copy count failed:',e.code));
+    }
     const btn = document.getElementById(type==='girl'?'copyGirlBtn':'copyBoyBtn');
     btn.classList.add('copied'); btn.innerHTML='<span>✓</span> Copied!';
     setTimeout(()=>{ btn.classList.remove('copied'); btn.innerHTML=`<span>📋</span> Copy ${type==='girl'?'Girl':'Boy'} Prompt`; },2000);
@@ -377,7 +439,9 @@
       document.getElementById('likeIcon').textContent='❤️';
       document.getElementById('likeBtn').className='action-btn like-action liked';
       currentPrompt.likes = (currentPrompt.likes||0)+1;
-      if (!id.startsWith('demo')) updateDoc(doc(db,'prompts',id),{likes:increment(1)}).catch(()=>{});
+      if (!id.startsWith('demo')) {
+        updateDoc(doc(db,'prompts',id),{likes:increment(1)}).catch(e => console.error('Like update failed:',e.code));
+      }
       showToast('Added to favourites ❤️');
     }
     document.getElementById('likeCount').textContent = currentPrompt.likes;
@@ -386,9 +450,20 @@
 
   window.sharePrompt = () => {
     if (!currentPrompt) return;
-    if (navigator.share) navigator.share({title:currentPrompt.title,text:'Check out this AI prompt!',url:window.location.href});
-    else { navigator.clipboard.writeText(window.location.href); showToast('Link copied! 🔗'); }
+    const slug = slugify(currentPrompt.title) + '-' + currentPrompt.id.substring(0, 6);
+    const cardUrl = 'https://promptgallery.surajfx.in/#' + slug;
+    const shareText = currentPrompt.title + ' — Check out this AI prompt on Prompt Gallery!';
+    if (navigator.share) {
+      navigator.share({ title: currentPrompt.title, text: shareText, url: cardUrl });
+    } else {
+      navigator.clipboard.writeText(cardUrl);
+      showToast('Link copied! 🔗');
+    }
   };
+
+  function slugify(text) {
+    return (text||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,60);
+  }
 
   window.setFilter = (filter) => {
     currentFilter = filter;
@@ -425,7 +500,108 @@
 
   function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 
-  loadPrompts();
+
+  // ===== HASH URL — Dynamic card links =====
+  function slugify(text) {
+    return (text || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 60);
+  }
+
+  function updateOGTags(prompt) {
+    const url = 'https://promptgallery.surajfx.in/#' + slugify(prompt.title) + '-' + prompt.id.substring(0, 6);
+    const img = prompt.imageUrl || 'https://promptgallery.surajfx.in/og-default.jpg';
+    const desc = (prompt.girlPrompt || prompt.boyPrompt || '').substring(0, 120) + '...';
+    document.title = prompt.title + ' — Prompt Gallery';
+    const setMeta = (id, val) => { const el = document.getElementById(id); if(el) el.setAttribute('content', val); };
+    setMeta('ogTitle', prompt.title + ' — Prompt Gallery');
+    setMeta('ogDesc', desc);
+    setMeta('ogImage', img);
+    setMeta('ogUrl', url);
+    setMeta('twTitle', prompt.title);
+    setMeta('twDesc', desc);
+    setMeta('twImage', img);
+  }
+
+  function resetOGTags() {
+    document.title = 'Prompt Gallery — AI Image Prompts';
+    const setMeta = (id, val) => { const el = document.getElementById(id); if(el) el.setAttribute('content', val); };
+    setMeta('ogTitle', 'Prompt Gallery — AI Image Prompts');
+    setMeta('ogDesc', 'Discover and share AI image prompts.');
+    setMeta('ogImage', 'https://promptgallery.surajfx.in/og-default.jpg');
+    setMeta('ogUrl', 'https://promptgallery.surajfx.in/');
+  }
+
+  // Override openModal to also update hash
+  const _origOpen = window.openModal;
+  window.openModal = (id) => {
+    _origOpen(id);
+    const p = allPrompts.find(x => x.id === id);
+    if (p) {
+      const slug = slugify(p.title) + '-' + id.substring(0, 6);
+      history.replaceState({modal: true, id}, '', '#' + slug);
+      updateOGTags(p);
+    }
+  };
+
+  // Override closeModal to reset hash
+  const _origClose = window.closeModal;
+  window.closeModal = () => {
+    _origClose();
+    history.replaceState({}, '', '#');
+    resetOGTags();
+  };
+
+  // sharePrompt defined above with hash URL
+
+  // On page load — check if hash matches a card
+  async function checkHashOnLoad() {
+    const hash = window.location.hash.replace('#', '');
+    if (!hash || hash === '/') return;
+    // Wait for prompts to load then open matching card
+    const tryOpen = (attempts = 0) => {
+      if (allPrompts.length > 0) {
+        // Match by ID prefix (last 6 chars of hash after last -)
+        const parts = hash.split('-');
+        const idPrefix = parts[parts.length - 1];
+        const matched = allPrompts.find(p => p.id.startsWith(idPrefix) || slugify(p.title) === parts.slice(0, -1).join('-'));
+        if (matched) openModal(matched.id);
+      } else if (attempts < 20) {
+        setTimeout(() => tryOpen(attempts + 1), 300);
+      }
+    };
+    tryOpen();
+  }
+
+  window.addEventListener('hashchange', () => {
+    const hash = window.location.hash.replace('#', '');
+    if (!hash || hash === '/') {
+      const overlay = document.getElementById('modalOverlay');
+      if (overlay.classList.contains('open')) { overlay.classList.remove('open'); document.body.style.overflow = ''; resetOGTags(); }
+    }
+  });
+
+  loadPrompts().then(() => checkHashOnLoad());
+
+
+  // Smooth image load
+  document.addEventListener('DOMContentLoaded', () => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const img = e.target;
+          img.addEventListener('load', () => img.classList.add('loaded'));
+          if (img.complete) img.classList.add('loaded');
+          observer.unobserve(img);
+        }
+      });
+    }, { rootMargin: '50px' });
+    
+    document.querySelectorAll('.card-img').forEach(img => observer.observe(img));
+  });
+
+  // Re-observe after render
+  const _origRender = window.renderPrompts || function(){};
+  const origRenderPrompts = renderPrompts;
+
 </script>
 
 <footer style="text-align:center;padding:30px 20px 80px;border-top:1px solid rgba(255,255,255,0.06);margin-top:20px;">
@@ -438,5 +614,8 @@
   </div>
   <div style="color:#3a3f52;font-size:11px;margin-top:16px;">© 2026 Prompt Gallery · All rights reserved</div>
 </footer>
+
+
+
 </body>
 </html>
