@@ -301,7 +301,7 @@
       av.onclick = () => window.location.href = 'profile.html';
       av.oncontextmenu = (e) => {
         e.preventDefault();
-        if (confirm('Logout করবে?')) signOut(auth).then(() => window.location.href = 'login.html?force=1');
+        if (confirm('Are you sure you want to logout?')) signOut(auth).then(() => window.location.href = 'login.html?force=1');
       };
       document.getElementById('profileNavBtn').href = 'profile.html';
       if (['su905072@gmail.com','rinaeditig@gmail.com'].includes(user.email)) {
