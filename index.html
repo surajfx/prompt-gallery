@@ -408,11 +408,18 @@
       </div>`).join('');
     document.getElementById('modalOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
-    history.pushState({modal:true,id},'','');
+    const slug = slugify(p.title) + '-' + id.substring(0, 6);
+    history.replaceState({modal:true,id}, '', '#' + slug);
+    updateOGTags(p);
   };
 
   document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target===document.getElementById('modalOverlay')) closeModal(); });
-  window.closeModal = () => { document.getElementById('modalOverlay').classList.remove('open'); document.body.style.overflow=''; if(history.state?.modal) history.back(); };
+  window.closeModal = () => { 
+    document.getElementById('modalOverlay').classList.remove('open'); 
+    document.body.style.overflow=''; 
+    history.replaceState({}, '', '#');
+    resetOGTags();
+  };
   window.addEventListener('popstate', () => { const o=document.getElementById('modalOverlay'); if(o.classList.contains('open')){o.classList.remove('open');document.body.style.overflow='';} });
 
   window.copyPrompt = (type) => {
@@ -505,9 +512,6 @@
 
 
   // ===== HASH URL — Dynamic card links =====
-  function slugify(text) {
-    return (text || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 60);
-  }
 
   function updateOGTags(prompt) {
     const url = 'https://promptgallery.surajfx.in/#' + slugify(prompt.title) + '-' + prompt.id.substring(0, 6);
@@ -533,25 +537,8 @@
     setMeta('ogUrl', 'https://promptgallery.surajfx.in/');
   }
 
-  // Override openModal to also update hash
-  const _origOpen = window.openModal;
-  window.openModal = (id) => {
-    _origOpen(id);
-    const p = allPrompts.find(x => x.id === id);
-    if (p) {
-      const slug = slugify(p.title) + '-' + id.substring(0, 6);
-      history.replaceState({modal: true, id}, '', '#' + slug);
-      updateOGTags(p);
-    }
-  };
-
-  // Override closeModal to reset hash
-  const _origClose = window.closeModal;
-  window.closeModal = () => {
-    _origClose();
-    history.replaceState({}, '', '#');
-    resetOGTags();
-  };
+  // Hash URL — update when modal opens/closes
+  // (Handled inside openModal and closeModal directly)
 
   // sharePrompt defined above with hash URL
 
