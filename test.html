@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firebase Test</title>
+<style>
+  body { background:#111; color:#fff; font-family:monospace; padding:20px; }
+  .ok { color:#4caf50; }
+  .err { color:#f44336; }
+  .info { color:#ffc107; }
+  div { margin:8px 0; padding:10px; background:#1a1a1a; border-radius:8px; word-break:break-all; }
+</style>
+</head>
+<body>
+<h2>🔥 Firebase Diagnostic</h2>
+<div id="log">Starting...</div>
+
+<script type="module">
+  const log = (msg, type='info') => {
+    const d = document.getElementById('log');
+    d.innerHTML += `<div class="${type}">${msg}</div>`;
+    console.log(msg);
+  };
+
+  log('⏳ Loading Firebase...', 'info');
+
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
+    log('✅ Firebase App loaded', 'ok');
+
+    const { getFirestore, collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+    log('✅ Firestore loaded', 'ok');
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDCb0OReMC3BScflE5lpvsp9F6Denq5nqM",
+      authDomain: "surajfx-dbfbf.firebaseapp.com",
+      projectId: "surajfx-dbfbf",
+      storageBucket: "surajfx-dbfbf.firebasestorage.app",
+      messagingSenderId: "1082799197835",
+      appId: "1:1082799197835:web:c567ac8798fe85f6570e8e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    log('✅ App initialized — Project: ' + firebaseConfig.projectId, 'ok');
+
+    const db = getFirestore(app);
+    log('✅ Firestore instance created', 'ok');
+
+    log('⏳ Fetching prompts collection...', 'info');
+
+    const snap = await getDocs(collection(db, 'prompts'));
+    log(`✅ SUCCESS! Found ${snap.size} documents`, 'ok');
+
+    snap.docs.slice(0, 3).forEach(d => {
+      log(`📄 Doc: ${d.id} | title: ${d.data().title || 'N/A'}`, 'ok');
+    });
+
+  } catch(e) {
+    log(`❌ ERROR: ${e.code || 'unknown'}`, 'err');
+    log(`❌ Message: ${e.message}`, 'err');
+    log(`❌ Stack: ${e.stack?.substring(0, 200)}`, 'err');
+  }
+</script>
+</body>
+</html>
