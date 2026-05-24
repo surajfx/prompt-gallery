@@ -299,7 +299,7 @@
       av.onclick = () => window.location.href = 'profile.html';
       av.oncontextmenu = (e) => {
         e.preventDefault();
-        if (confirm('Are you sure you want to logout?')) signOut(auth).then(() => window.location.href = 'login.html?force=1');
+        if (confirm('Logout করবে?')) signOut(auth).then(() => window.location.href = 'login.html?force=1');
       };
       document.getElementById('profileNavBtn').href = 'profile.html';
       if (['su905072@gmail.com','rinaeditig@gmail.com'].includes(user.email)) {
@@ -349,10 +349,7 @@
     grid.innerHTML = prompts.map((p, i) => `
       <div class="card" onclick="openModal('${p.id}')" style="animation-delay:${i*0.05}s">
         <div class="card-img-wrap">
-          ${p.imageUrl && p.imageUrl !== 'null' && p.imageUrl !== '' 
-            ? `<img class="card-img" src="${p.imageUrl}" alt="${p.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-               <div class="card-img-placeholder" style="display:none;background:${p.bg||'#1a1a2e'}">${p.emoji||'🎨'}</div>`
-            : `<div class="card-img-placeholder" style="background:${p.bg||'#1a1a2e'}">${p.emoji||'🎨'}</div>`}
+          ${p.imageUrl ? `<img class="card-img" src="${p.imageUrl}" alt="${p.title}" loading="lazy">` : `<div class="card-img-placeholder" style="background:${p.bg||'#1a1a2e'}">${p.emoji||'🎨'}</div>`}
           <div class="card-category-tag">${p.personalLabel||p.category||'Prompt'}</div>
           <div class="card-like-btn ${isLiked(p.id)?'liked':''}" onclick="event.stopPropagation();quickLike('${p.id}',this)">${isLiked(p.id)?'❤️':'🤍'}</div>
         </div>
@@ -406,27 +403,18 @@
       </div>`).join('');
     document.getElementById('modalOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
-    const slug = slugify(p.title) + '-' + id.substring(0, 6);
-    history.replaceState({modal:true,id}, '', '#' + slug);
-    updateOGTags(p);
+    history.pushState({modal:true,id},'','');
   };
 
   document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target===document.getElementById('modalOverlay')) closeModal(); });
-  window.closeModal = () => { 
-    document.getElementById('modalOverlay').classList.remove('open'); 
-    document.body.style.overflow=''; 
-    history.replaceState({}, '', '#');
-    resetOGTags();
-  };
+  window.closeModal = () => { document.getElementById('modalOverlay').classList.remove('open'); document.body.style.overflow=''; if(history.state?.modal) history.back(); };
   window.addEventListener('popstate', () => { const o=document.getElementById('modalOverlay'); if(o.classList.contains('open')){o.classList.remove('open');document.body.style.overflow='';} });
 
   window.copyPrompt = (type) => {
     if (!currentPrompt) return;
     const text = type==='girl' ? currentPrompt.girlPrompt : currentPrompt.boyPrompt;
     navigator.clipboard.writeText(text||'').catch(()=>{});
-    if (currentPrompt.id && !currentPrompt.id.startsWith('demo')) {
-      updateDoc(doc(db,'prompts',currentPrompt.id),{copyCount:increment(1)}).catch(e => console.error('Copy count failed:',e.code));
-    }
+    if (currentPrompt.id && !currentPrompt.id.startsWith('demo')) updateDoc(doc(db,'prompts',currentPrompt.id),{copyCount:increment(1)}).catch(()=>{});
     const btn = document.getElementById(type==='girl'?'copyGirlBtn':'copyBoyBtn');
     btn.classList.add('copied'); btn.innerHTML='<span>✓</span> Copied!';
     setTimeout(()=>{ btn.classList.remove('copied'); btn.innerHTML=`<span>📋</span> Copy ${type==='girl'?'Girl':'Boy'} Prompt`; },2000);
@@ -447,9 +435,7 @@
       document.getElementById('likeIcon').textContent='❤️';
       document.getElementById('likeBtn').className='action-btn like-action liked';
       currentPrompt.likes = (currentPrompt.likes||0)+1;
-      if (!id.startsWith('demo')) {
-        updateDoc(doc(db,'prompts',id),{likes:increment(1)}).catch(e => console.error('Like update failed:',e.code));
-      }
+      if (!id.startsWith('demo')) updateDoc(doc(db,'prompts',id),{likes:increment(1)}).catch(()=>{});
       showToast('Added to favourites ❤️');
     }
     document.getElementById('likeCount').textContent = currentPrompt.likes;
@@ -458,20 +444,9 @@
 
   window.sharePrompt = () => {
     if (!currentPrompt) return;
-    const slug = slugify(currentPrompt.title) + '-' + currentPrompt.id.substring(0, 6);
-    const cardUrl = window.location.origin + '/#' + slug;
-    const shareText = currentPrompt.title + ' — Check out this AI prompt on Prompt Gallery!';
-    if (navigator.share) {
-      navigator.share({ title: currentPrompt.title, text: shareText, url: cardUrl });
-    } else {
-      navigator.clipboard.writeText(cardUrl);
-      showToast('Link copied! 🔗');
-    }
+    if (navigator.share) navigator.share({title:currentPrompt.title,text:'Check out this AI prompt!',url:window.location.href});
+    else { navigator.clipboard.writeText(window.location.href); showToast('Link copied! 🔗'); }
   };
-
-  function slugify(text) {
-    return (text||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,60);
-  }
 
   window.setFilter = (filter) => {
     currentFilter = filter;
@@ -508,88 +483,7 @@
 
   function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 
-
-  // ===== HASH URL — Dynamic card links =====
-
-  function updateOGTags(prompt) {
-    const url = window.location.origin + '/#' + slugify(prompt.title) + '-' + prompt.id.substring(0, 6);
-    const img = prompt.imageUrl || 'https://promptgallery.surajfx.in/og-default.jpg';
-    const desc = (prompt.girlPrompt || prompt.boyPrompt || '').substring(0, 120) + '...';
-    document.title = prompt.title + ' — Prompt Gallery';
-    const setMeta = (id, val) => { const el = document.getElementById(id); if(el) el.setAttribute('content', val); };
-    setMeta('ogTitle', prompt.title + ' — Prompt Gallery');
-    setMeta('ogDesc', desc);
-    setMeta('ogImage', img);
-    setMeta('ogUrl', url);
-    setMeta('twTitle', prompt.title);
-    setMeta('twDesc', desc);
-    setMeta('twImage', img);
-  }
-
-  function resetOGTags() {
-    document.title = 'Prompt Gallery — AI Image Prompts';
-    const setMeta = (id, val) => { const el = document.getElementById(id); if(el) el.setAttribute('content', val); };
-    setMeta('ogTitle', 'Prompt Gallery — AI Image Prompts');
-    setMeta('ogDesc', 'Discover and share AI image prompts.');
-    setMeta('ogImage', 'https://promptgallery.surajfx.in/og-default.jpg');
-    setMeta('ogUrl', 'https://promptgallery.surajfx.in/');
-  }
-
-  // Hash URL — update when modal opens/closes
-  // (Handled inside openModal and closeModal directly)
-
-  // sharePrompt defined above with hash URL
-
-  // On page load — check if hash matches a card
-  async function checkHashOnLoad() {
-    const hash = window.location.hash.replace('#', '');
-    if (!hash || hash === '/') return;
-    // Wait for prompts to load then open matching card
-    const tryOpen = (attempts = 0) => {
-      if (allPrompts.length > 0) {
-        // Match by ID prefix (last 6 chars of hash after last -)
-        const parts = hash.split('-');
-        const idPrefix = parts[parts.length - 1];
-        const matched = allPrompts.find(p => p.id.startsWith(idPrefix) || slugify(p.title) === parts.slice(0, -1).join('-'));
-        if (matched) openModal(matched.id);
-      } else if (attempts < 20) {
-        setTimeout(() => tryOpen(attempts + 1), 300);
-      }
-    };
-    tryOpen();
-  }
-
-  window.addEventListener('hashchange', () => {
-    const hash = window.location.hash.replace('#', '');
-    if (!hash || hash === '/') {
-      const overlay = document.getElementById('modalOverlay');
-      if (overlay.classList.contains('open')) { overlay.classList.remove('open'); document.body.style.overflow = ''; resetOGTags(); }
-    }
-  });
-
-  loadPrompts().then(() => checkHashOnLoad());
-
-
-  // Smooth image load
-  document.addEventListener('DOMContentLoaded', () => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          const img = e.target;
-          img.addEventListener('load', () => img.classList.add('loaded'));
-          if (img.complete) img.classList.add('loaded');
-          observer.unobserve(img);
-        }
-      });
-    }, { rootMargin: '50px' });
-    
-    document.querySelectorAll('.card-img').forEach(img => observer.observe(img));
-  });
-
-  // Re-observe after render
-  const _origRender = window.renderPrompts || function(){};
-  const origRenderPrompts = renderPrompts;
-
+  loadPrompts();
 </script>
 
 <footer style="text-align:center;padding:30px 20px 80px;border-top:1px solid rgba(255,255,255,0.06);margin-top:20px;">
@@ -602,8 +496,5 @@
   </div>
   <div style="color:#3a3f52;font-size:11px;margin-top:16px;">© 2026 Prompt Gallery · All rights reserved</div>
 </footer>
-
-
-
 </body>
 </html>
