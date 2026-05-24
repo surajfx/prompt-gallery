@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Prompt Gallery — AI Image Prompts</title>
+<meta name="description" content="Discover and share AI image prompts for Cinematic, 4K, Anime styles.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prompt Gallery">
+<meta property="og:title" id="ogTitle" content="Prompt Gallery — AI Image Prompts">
+<meta property="og:description" id="ogDesc" content="Discover and share AI image prompts.">
+<meta property="og:image" id="ogImage" content="https://promptgallery.surajfx.in/og-default.jpg">
+<meta property="og:url" id="ogUrl" content="https://promptgallery.surajfx.in/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" id="twTitle" content="Prompt Gallery">
+<meta name="twitter:description" id="twDesc" content="Discover AI image prompts">
+<meta name="twitter:image" id="twImage" content="https://promptgallery.surajfx.in/og-default.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -106,6 +117,54 @@
   .related-card-img-placeholder { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 24px; background: var(--card); }
   .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1a1a1a; border: 1px solid rgba(255,193,7,0.3); color: var(--gold); padding: 10px 20px; border-radius: 100px; font-size: 13px; font-weight: 600; font-family: 'Syne', sans-serif; z-index: 9999; opacity: 0; transition: all 0.3s ease; white-space: nowrap; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ===== SMOOTH IMPROVEMENTS ===== */
+  * { -webkit-tap-highlight-color: transparent; }
+  
+  html { scroll-behavior: smooth; }
+  
+  /* Smooth card hover */
+  .card { transition: all 0.3s cubic-bezier(0.34, 1.2, 0.64, 1); }
+  .card:active { transform: scale(0.97); }
+  
+  /* Smooth filter buttons */
+  .filter-btn { transition: all 0.25s cubic-bezier(0.34, 1.2, 0.64, 1); }
+  .filter-btn:active { transform: scale(0.95); }
+  
+  /* Smooth bottom nav */
+  .bottom-nav-item { transition: all 0.2s ease; }
+  .bottom-nav-item:active { transform: scale(0.9); }
+  
+  /* Smooth buttons */
+  button { transition: all 0.2s ease; }
+  button:active { transform: scale(0.96); opacity: 0.85; }
+  
+  /* Smooth modal */
+  .modal { transition: transform 0.35s cubic-bezier(0.34, 1.1, 0.64, 1); }
+  
+  /* Smooth image load */
+  .card-img { transition: transform 0.4s ease; opacity: 1; }
+  
+  /* Smooth search */
+  .search-input { transition: all 0.25s ease; }
+  .search-input:focus { transform: scale(1.01); box-shadow: 0 0 0 3px rgba(255,193,7,0.15); }
+  
+  /* Smooth like button */
+  .card-like-btn { transition: all 0.2s cubic-bezier(0.34, 1.5, 0.64, 1); }
+  .card-like-btn:active { transform: scale(1.3); }
+  
+  /* Page load fade in */
+  body { animation: pageFadeIn 0.4s ease; }
+  @keyframes pageFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  
+  /* Smooth copy btn */
+  .copy-btn { transition: all 0.2s ease; }
+  .copy-btn:active { transform: scale(0.97); }
+  
+  /* Nav upload btn */
+  .nav-upload-btn:active { transform: scale(0.95); }
+  .nav-auth-btn:active { transform: scale(0.95); }
+
   @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
@@ -192,7 +251,7 @@
       </div>
       <div class="modal-actions">
         <button class="action-btn like-action" id="likeBtn" onclick="toggleLike()"><span id="likeIcon">🤍</span> <span id="likeCount">0</span></button>
-        <button class="action-btn" onclick="sharePrompt()"><span>🔗</span> Share</button>
+        <button class="action-btn" id="shareLinkBtn" onclick="copyCardLink()"><span>🔗</span> Copy Link</button>
       </div>
       <div class="related-section">
         <div class="related-title">More Prompts</div>
@@ -201,7 +260,8 @@
     </div>
   </div>
 </div>
-<nav class="bottom-nav">
+
+ <nav class="bottom-nav">
   <a href="index.html" class="bottom-nav-item active"><span class="icon">🏠</span><span class="label">Home</span></a>
   <a href="#" class="bottom-nav-item" onclick="setFilter('trending')"><span class="icon">🔥</span><span class="label">Trending</span></a>
   <a href="upload.html" class="bottom-nav-item"><span class="icon">➕</span><span class="label">Upload</span></a>
